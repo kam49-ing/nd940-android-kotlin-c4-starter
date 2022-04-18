@@ -91,7 +91,10 @@ class RemindersActivityTest :
         IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
-
+    @After
+    fun deleteReminders() = runBlocking {
+        repository.deleteAllReminders()
+    }
 
     @Test
     fun saveReminder() {

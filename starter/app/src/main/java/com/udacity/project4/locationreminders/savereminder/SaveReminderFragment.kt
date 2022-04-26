@@ -78,11 +78,6 @@ class SaveReminderFragment : BaseFragment() {
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
 
-        Log.i(TAG, "permissionGranted : $permissionGranted")
-
-        requestForegroundAndBackgroundLocationPermissions()
-        Log.i(TAG, "permissionGranted : $permissionGranted")
-
         binding.saveReminder.setOnClickListener {
             title = _viewModel.reminderTitle.value
             description = _viewModel.reminderDescription.value
@@ -94,8 +89,26 @@ class SaveReminderFragment : BaseFragment() {
 
             val reminderDataItem = ReminderDataItem(title, description, location, latitude, longitude, id = id)
             _viewModel.saveReminder(reminderDataItem)
-            checkDeviceLocationSettingsAndStartGeofence()
+            checkPermissionsAndStartGeofencing()
+        }
+    }
 
+    /**
+     * Starts the permission check and Geofence process only if the Geofence associated with the
+     * current hint isn't yet active.
+     */
+    private fun checkPermissionsAndStartGeofencing() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            checkDeviceLocationSettingsAndStartGeofence(false)
         }
     }
 
@@ -195,8 +208,11 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask?.addOnFailureListener { exception ->
             if (exception is ResolvableApiException && resolve){
                 try {
-                    exception.startResolutionForResult(this.contxt as Activity,
-                        REQUEST_TURN_DEVICE_LOCATION_ON)
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null, 0, 0, 0, null
+                    )
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }

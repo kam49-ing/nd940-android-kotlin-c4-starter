@@ -5,15 +5,20 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Criteria
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.util.Log
 import android.view.*
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -25,6 +30,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -41,6 +47,7 @@ class SelectLocationFragment : BaseFragment(){
     private lateinit var map: GoogleMap
     private var poi: MutableLiveData<PointOfInterest?> = MutableLiveData(null)
     private val REQUEST_LOCATION_PERMISSION = 1
+    private val REQUEST_BACKGROUND_LOCATION = 2
     private val TAG = "SELECTFRAGMENTMAP"
     private var userLocation:Location?=null
     private lateinit var contxt:Context
@@ -110,19 +117,13 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
     private fun enableMyLocation() {
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
+            getUserLocation()
+            if (userLocation != null){
+                val latLng = LatLng(userLocation!!.latitude, userLocation!!.longitude)
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+            }
         }
-        else {
-            ActivityCompat.requestPermissions(
-                this.requireActivity(),
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
-                REQUEST_LOCATION_PERMISSION
-            )
-        }
-        getUserLocation()
-        if (userLocation != null){
-            val latLng = LatLng(userLocation!!.latitude, userLocation!!.longitude)
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-        }
+        requestLocationPermission()
     }
 
     @SuppressLint("MissingPermission")
@@ -192,9 +193,84 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
             if (grantResults.isNotEmpty() && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 enableMyLocation()
             }
+            else
+            {
+                showSnackbar()
+            }
+        }
+        if (requestCode == REQUEST_BACKGROUND_LOCATION)
+        {
+            if (
+                grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[1] == PackageManager.PERMISSION_GRANTED
+            )
+            {
+                enableMyLocation()
+            }
+            else
+            {
+                showSnackbar()
+            }
         }
     }
 
+    private fun showSnackbar() {
+        Snackbar.make(
+            binding.root,
+            R.string.permission_denied_explanation,
+            Snackbar.LENGTH_INDEFINITE
+        )
+            .setAction(R.string.settings) {
+                startActivity(Intent().apply {
+                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+            }
+            .setAction(R.string.ok) {
+                requestLocationPermission()
+            }
+            .show()
+    }
+
+    /**
+     * requestLocationPermission - request the location fine location
+     *
+     * Return: Nothing
+     */
+    private fun requestLocationPermission()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+        {
+            requestQOrLaterPermission()
+        }
+        else
+        {
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
+
+        }
+    }
+
+    /**
+     * requestQOrLaterPermission - requests permission for devices running Q or Later
+     *
+     * Return: Nothing
+     */
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun requestQOrLaterPermission()
+    {
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ),
+            REQUEST_BACKGROUND_LOCATION
+        )
+    }
 
     private fun setMapLongClickListener(map:GoogleMap){
 

@@ -41,5 +41,7 @@
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
     <string name="save_location">Save location</string>
     <string name="login">Login</string>
-    <string name="ok">ok</string>
+    <string name="ok">OK</string>
+    <string name="geofence_added">Geofence added successfully</string>
+    <string name="save_reminder_error_explanation">Please make sure you\'ve selected a location and added title and description before saving</string>
 </resources>

@@ -1,16 +1,19 @@
 package com.udacity.project4
 
+import android.Manifest
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
-import androidx.test.espresso.IdlingResource
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.rule.GrantPermissionRule
+import androidx.test.runner.AndroidJUnit4
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -21,8 +24,11 @@ import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.EspressoIdlingResource
 import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -31,6 +37,7 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
+
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -41,6 +48,11 @@ class RemindersActivityTest :
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
     private val dataBindingIdlingResource = DataBindingIdlingResource()
+
+    @get:Rule
+    val grantPermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -124,9 +136,26 @@ class RemindersActivityTest :
         // Checking if the reminder is displayed in the UI
         onView(withText("TITLE1")).check(matches(isDisplayed()))
         onView(withText("DESCRIPTION1")).check(matches(isDisplayed()))
+        onView(withText(R.string.geofence_added))
+            .inRoot(withDecorView(
+                not(
+                    `is`(getActivity(activityScenario)?.window?.decorView)
+                )
+            ))
+            .check(matches(
+            isDisplayed()))
 
         // Make sure the activity is closed
         activityScenario.close()
+    }
+
+    // get activity context
+    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity? {
+        var activity: Activity? = null
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
     }
 
 }

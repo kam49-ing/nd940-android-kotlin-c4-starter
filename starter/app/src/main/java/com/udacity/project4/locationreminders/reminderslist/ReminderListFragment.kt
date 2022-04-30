@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.observe
 import com.firebase.ui.auth.AuthUI
 import com.udacity.project4.R
 import com.udacity.project4.authentication.AuthenticationActivity
@@ -29,6 +31,13 @@ class ReminderListFragment : BaseFragment() {
                 R.layout.fragment_reminders, container, false
             )
         binding.viewModel = _viewModel
+
+        _viewModel.remindersList.observe(viewLifecycleOwner, Observer{
+            if (it.isNotEmpty())
+            {
+                binding.noDataTextView.visibility = View.GONE
+            }
+        })
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(false)

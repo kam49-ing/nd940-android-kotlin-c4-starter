@@ -73,16 +73,17 @@ class RemindersListViewModelTest {
 
     @Test
     fun showError(){
-        // GIVEN - A viewModel
+        // GIVEN - A viewModel and a fake repository with shouldReturnError true
+        remindersRepository.setReturnError(true)
 
-        // WHEN - Loading reminder in empty repository
-        remindersListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), FakeDataSource())
+        // WHEN - Loading reminders
+        remindersListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), remindersRepository)
         remindersListViewModel.loadReminders()
 
         // THEN - no reminder found
         Assert.assertThat(
             remindersListViewModel.showSnackBar.getOrAwaitValue(),
-            `is`("no reminder found")
+            `is`("Test Exception")
         )
     }
 

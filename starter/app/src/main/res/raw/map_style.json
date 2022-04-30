@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "featureType": "transit.station",
+    "stylers": [
+      {
+        "color": "#edd400"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station.airport",
+    "stylers": [
+      {
+        "color": "#a40000"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station.bus",
+    "stylers": [
+      {
+        "color": "#d3d7cf"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "stylers": [
+      {
+        "color": "#729fcf"
+      }
+    ]
+  }
+]

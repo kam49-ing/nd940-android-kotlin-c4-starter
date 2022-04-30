@@ -27,6 +27,12 @@ class AuthenticationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
 
+        val currentUser = FirebaseAuth.getInstance().currentUser
+
+        if (currentUser != null)
+        {
+            navigateToReminderActivity()
+        }
         binding.loginButton.setOnClickListener{
             launchSignInFlow()
         }
@@ -60,9 +66,7 @@ class AuthenticationActivity : AppCompatActivity() {
                     "Successfully signed in user " +
                             "${FirebaseAuth.getInstance().currentUser?.displayName}!"
                 )
-                val intent = Intent(this, RemindersActivity::class.java)
-                startActivity(intent)
-                this.finishAffinity()
+                navigateToReminderActivity()
             } else {
                 // Sign in failed. If response is null the user canceled the sign-in flow using
                 // the back button. Otherwise check response.getError().getErrorCode() and handle
@@ -73,6 +77,13 @@ class AuthenticationActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun navigateToReminderActivity() {
+        val intent = Intent(this, RemindersActivity::class.java)
+        startActivity(intent)
+        this.finishAffinity()
+    }
+
     companion object{
         const val SIGN_IN_RESULT_CODE = 1001
     }

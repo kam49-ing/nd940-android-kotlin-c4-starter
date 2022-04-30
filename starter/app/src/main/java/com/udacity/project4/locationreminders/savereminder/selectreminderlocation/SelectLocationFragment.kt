@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -22,6 +23,7 @@ import android.view.*
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.fragment.findNavController
@@ -79,7 +81,7 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
             googleMap ->
             map = googleMap
 
-            val longitude = -73.935242
+            val longitude = 65.9667
             val latitude = 40.73061
 
             val latLng = LatLng(longitude, latitude)
@@ -87,33 +89,8 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
 
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom))
 
-            val locationRequest = LocationRequest()
-            locationRequest.interval = 60000
-            locationRequest.fastestInterval = 5000
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            checkDeviceLocationSettings(true)
 
-
-            val builder = LocationSettingsRequest.Builder()
-                .addLocationRequest(locationRequest)
-            val client: SettingsClient = LocationServices.getSettingsClient(contxt)
-            val task: Task<LocationSettingsResponse>? = client.checkLocationSettings(builder.build())
-
-            task?.addOnSuccessListener {
-                enableMyLocation()
-            }
-                ?.addOnFailureListener {
-                    exception ->
-                    if (exception is ResolvableApiException)
-                    {
-                        try
-                        {
-                            exception.startResolutionForResult(requireActivity(), REQUEST_CHECK_SETTINGS)
-                        }
-                        catch (exception: Exception)
-                        {
-                        }
-                    }
-                }
             val androidOverlay = GroundOverlayOptions()
                 .image(BitmapDescriptorFactory.fromResource(R.drawable.android))
                 .position(latLng, 15f)
@@ -154,7 +131,7 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
 
     @SuppressLint("MissingPermission")
     private fun getUserLocation(){
-        val locationManager = this.activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = (contxt as Activity).getSystemService(Context.LOCATION_SERVICE) as LocationManager
         userLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         if (userLocation == null){
             val criteria = Criteria()
@@ -209,9 +186,8 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON)
             checkDeviceLocationSettings(false)
-        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -248,6 +224,11 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
         }
     }
 
+    private fun isLocationEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(locationManager)
+    }
+
     private fun showSnackbar() {
         Snackbar.make(
             binding.root,
@@ -275,7 +256,7 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
     private fun requestLocationPermission()
     {
         val hasForegroundPermission = ActivityCompat.checkSelfPermission(
-            requireActivity(),
+            contxt,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
@@ -308,14 +289,14 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun requestQOrLaterPermission()
     {
+
         val hasForegroundPermissionAndBackgroundPermission = ActivityCompat.checkSelfPermission(
-            requireActivity(),
+            contxt,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            requireActivity(),
+            contxt,
             Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-
         if (hasForegroundPermissionAndBackgroundPermission)
         {
             checkDeviceLocationSettings(true)
@@ -421,6 +402,8 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
                     checkDeviceLocationSettings(true)
                 }.show()
             }
+        }?.addOnSuccessListener {
+            enableMyLocation()
         }
         return locationSettingsResponseTask
     }

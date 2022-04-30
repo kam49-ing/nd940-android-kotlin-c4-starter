@@ -32,13 +32,6 @@ class ReminderListFragment : BaseFragment() {
             )
         binding.viewModel = _viewModel
 
-        _viewModel.remindersList.observe(viewLifecycleOwner, Observer{
-            if (it.isNotEmpty())
-            {
-                binding.noDataTextView.visibility = View.GONE
-            }
-        })
-
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(false)
         setTitle(getString(R.string.app_name))

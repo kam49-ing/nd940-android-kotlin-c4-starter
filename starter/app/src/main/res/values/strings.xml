@@ -44,4 +44,6 @@
     <string name="ok">OK</string>
     <string name="geofence_added">Geofence added successfully</string>
     <string name="save_reminder_error_explanation">Please make sure you\'ve selected a location and added title and description before saving</string>
+    <string name="permission_denied_and_dont_ask_again_explanation">Location Reminder cannot work without location. If you want to use it, please grant that permission in your settings.</string>
+    <string name="quit">Quit</string>
 </resources>

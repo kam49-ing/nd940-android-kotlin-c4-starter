@@ -19,6 +19,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -28,11 +29,13 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.BuildConfig
 import org.koin.android.ext.android.inject
+import java.lang.Thread.sleep
 import java.util.*
 
 const val ACTION_GEOFENCE_INTENT="LOCATION_REMINDER"
@@ -158,27 +161,45 @@ class SaveReminderFragment : BaseFragment() {
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
+    /**
+     * foregroundPermissionApproved - Checks if foreground permission is approved
+     *
+     * Return - true if permission is approved, false otherwise
+     */
+    private fun foregroundPermissionApproved():Boolean
+    {
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat
+            .checkSelfPermission(
+                contxt,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+    }
+
     @TargetApi(29 )
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved()){
             return
         }
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        var permissionsArray = arrayOf<String>()
         val resultCode = when {
             runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+                if (foregroundPermissionApproved())
+                {
+                    permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    REQUEST_BACKGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+                }
+                else
+                {
+                    permissionsArray += Manifest.permission.ACCESS_FINE_LOCATION
+                    permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+                }
             }
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
         Log.d(TAG, "Request foreground only location permission")
-        this.activity?.let {
-            ActivityCompat.requestPermissions(
-                it,
-                permissionsArray,
-                resultCode
-            )
-        }
+        requestPermissions(permissionsArray, resultCode)
     }
 
     override fun onRequestPermissionsResult(
@@ -191,24 +212,51 @@ class SaveReminderFragment : BaseFragment() {
 
         if (
             grantResults.isEmpty() ||
-            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_BACKGROUND_ONLY_PERMISSIONS_REQUEST_CODE &&
+                    grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED) ||
+            (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE &&
+                    grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED) ||
             (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
-                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
-                    PackageManager.PERMISSION_DENIED))
+                    (grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED) || grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED))
         {
-            Snackbar.make(
-                binding.root,
-                R.string.permission_denied_explanation,
-                Snackbar.LENGTH_INDEFINITE
+            if (
+                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+                || !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             )
-                .setAction(R.string.settings) {
-                    startActivity(Intent().apply {
-                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
-                }.show()
-        } else {
+            {
+                Snackbar.make(
+                    binding.root,
+                    R.string.permission_denied_and_dont_ask_again_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(R.string.ok){
+                        finishAffinity(contxt as Activity)
+                    }
+                    .show()
+            }
+            else
+            {
+                Snackbar.make(
+                    binding.root,
+                    R.string.permission_denied_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(R.string.settings) {
+                        startActivity(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }
+                    .setAction(R.string.ok){
+                        requestForegroundAndBackgroundLocationPermissions()
+                    }
+                    .show()
+            }
+        }
+        else
+        {
             checkDeviceLocationSettingsAndStartGeofence(true)
         }
     }
@@ -303,3 +351,4 @@ private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
 private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+private const val REQUEST_BACKGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 35

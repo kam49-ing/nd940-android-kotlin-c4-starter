@@ -21,28 +21,10 @@ import com.udacity.project4.locationreminders.savereminder.ACTION_GEOFENCE_INTEN
  */
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
-    private val TAG = "GeofenceBroadcastR"
     override fun onReceive(context: Context, intent: Intent) {
-
-       if (intent.action == ACTION_GEOFENCE_INTENT){
-            val geofencingEvent = GeofencingEvent.fromIntent(intent)
-
-            if (geofencingEvent.hasError())
-            {
-                val errorCode = geofencingEvent.errorCode
-                val errorMessage = when(errorCode){
-                    GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE -> "Geofence service is not available now"
-                    GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES -> "Too many geofences"
-                    GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS -> "Too many pending intent"
-                    else -> "Unknown error, Geofence service is not available now"
-
-                }
-                Log.e(TAG, errorMessage)
-                return
-            }
-            if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                enqueueWork(context, intent)
-            }
+        Log.i("GeofenceBroadcastR", "OnReceive")
+        if (intent.action == ACTION_GEOFENCE_INTENT){
+           enqueueWork(context, intent)
         }
 
     }

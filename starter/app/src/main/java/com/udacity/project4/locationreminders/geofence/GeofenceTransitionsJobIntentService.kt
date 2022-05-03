@@ -53,8 +53,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
             Log.e(TAG, errorMessage)
             return
         }
-        if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-            geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL)
+        if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER)
         {
             val geofences = geofencingEvent.triggeringGeofences
             sendNotification(geofences)

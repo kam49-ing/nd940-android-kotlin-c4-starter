@@ -82,8 +82,8 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
             googleMap ->
             map = googleMap
 
-            val longitude = 65.9667
-            val latitude = 40.73061
+            val longitude = -74.005941
+            val latitude = 40.712784
 
             val latLng = LatLng(longitude, latitude)
             val zoom = 15f
@@ -150,11 +150,12 @@ val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapF
     private fun onLocationSelected() {
 
         if (poi.value == null ){
-            Snackbar.make(this.requireView(), "Please select a poi before continuing !",Snackbar.LENGTH_LONG).show()
+            Snackbar.make(this.requireView(), "Please select a poi before continuing !", Snackbar.LENGTH_LONG).show()
         }else {
             _viewModel.latitude.value = poi.value?.latLng?.latitude
             _viewModel.longitude.value = poi.value?.latLng?.longitude
             _viewModel.selectedPOI.value = poi.value
+            _viewModel.reminderSelectedLocationStr.value = poi.value?.name
             findNavController().popBackStack(R.id.saveReminderFragment, false)
         }
 

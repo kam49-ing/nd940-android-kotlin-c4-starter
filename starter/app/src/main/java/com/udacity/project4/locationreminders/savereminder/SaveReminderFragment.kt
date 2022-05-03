@@ -85,11 +85,11 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
-            title = _viewModel.reminderTitle.value
+            title = _viewModel.selectedPOI.value?.name
             description = _viewModel.reminderDescription.value
             location = _viewModel.reminderSelectedLocationStr.value
-            latitude = _viewModel.latitude.value
-            longitude = _viewModel.longitude.value
+            latitude = _viewModel.selectedPOI.value?.latLng?.latitude
+            longitude = _viewModel.selectedPOI.value?.latLng?.longitude
             id = UUID.randomUUID().toString()
 
             if (
@@ -269,7 +269,7 @@ class SaveReminderFragment : BaseFragment() {
                 addGeofenceForClue()
                 val reminderDataItem =
                     ReminderDataItem(title, description, location, latitude, longitude, id = id)
-                _viewModel.saveReminder(reminderDataItem)
+                _viewModel.validateAndSaveReminder(reminderDataItem)
             }
         }
     }

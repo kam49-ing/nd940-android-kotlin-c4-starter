@@ -50,7 +50,7 @@ class SaveReminderFragment : BaseFragment() {
     private var description:String? = null
     private var latitude:Double? = null
     private var longitude:Double? = null
-    private var radius = 500f
+    private var radius = 5000f
     private var location: String? = null
     private lateinit var id:String
     private lateinit var contxt:Context
@@ -314,9 +314,8 @@ class SaveReminderFragment : BaseFragment() {
                 Geofence.Builder()
                     .setCircularRegion(it, it1, radius)
                     .setRequestId(id)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL)
-                    .setExpirationDuration(5000)
-                    .setLoiteringDelay(1000)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .build()
             }
         }

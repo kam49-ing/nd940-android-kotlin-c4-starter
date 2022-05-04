@@ -324,20 +324,16 @@ class SaveReminderFragment : BaseFragment() {
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             .build()
 
-        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
-            addOnCompleteListener {
-                geofencingClient.addGeofences(geofenceRequest, geofencePendingIntent)?.run {
-                    addOnSuccessListener {
-                        Toast.makeText(
-                            contxt,
-                            contxt.getString(R.string.geofence_added),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                    addOnFailureListener {
-                        Toast.makeText(contxt, "An exception occurred: ${it.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
+        geofencingClient.addGeofences(geofenceRequest, geofencePendingIntent)?.run {
+            addOnSuccessListener {
+                Toast.makeText(
+                    contxt,
+                    contxt.getString(R.string.geofence_added),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            addOnFailureListener {
+                Toast.makeText(contxt, "An exception occurred: ${it.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
